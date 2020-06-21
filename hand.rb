@@ -14,6 +14,12 @@ class Hand
     @points.sum
   end
 
+  def ace_in_hand
+   if @points.include?(11)
+    current_points -= 10
+   end
+  end
+
   def add_card(card,value_card)
     @cards << card
     @points << value_card.to_i

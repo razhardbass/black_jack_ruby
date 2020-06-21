@@ -16,8 +16,4 @@ class Bank
   def win_game
     @money += 20 
   end
-
-  def to_s
-    @money
-  end
 end

@@ -17,12 +17,14 @@ class BlackJack
     @user_bank.make_bet
     table
     play_game
+    game_result
   end
 
   def hello
     puts "Приветсвуем в игре Black Jack! Как вас зовут?"
     name = gets.chomp.to_s
     @player_name = Player.new(name)
+    @dealer = Dealer.new
     puts "Ставки сделаны, игра начинается!"
   end
   
@@ -49,6 +51,7 @@ class BlackJack
     loop do
       action_request
       response_action
+      break if @action == 3
     end
   end
 
@@ -72,13 +75,35 @@ class BlackJack
     end
   end
 
+  def game_result
+    skip_a_move
+    if (@user_hand.current_points > 21) && (@dealer_hand.current_points > 21)
+      @user_bank.draw
+      @dealer_bank.draw
+    end
+    if @user_hand.current_points == @dealer_hand.current_points
+      @user_bank.draw
+      @dealer_bank.draw
+    end
+    if @user_hand.current_points > 21
+      @dealer_bank.win_game
+    end
+    if  @dealer_hand.current_points > 21
+      @user_bank.win_game
+    end
+    if @user_hand.current_points > @dealer_hand.current_points
+      @user_bank.win_game
+    else
+      @dealer_bank.win_game
+    end
+  end
+
   def skip_a_move
     @dealer_hand = Hand.new(@new_deck.give_a_card, @new_deck.value, @new_deck.give_a_card, @new_deck.value)
     dealer_points = @dealer_hand.current_points
-    if dealer_points < 17
+    loop do
       @dealer_hand.add_card(@new_deck.give_a_card,@new_deck.value)
-    else
-      return
+      break if dealer_points < 17
     end
   end
 
@@ -88,6 +113,7 @@ class BlackJack
   end
 
   def open_cards
+    skip_a_move
     puts COMPLITION
     puts "Карты дилера :#{@dealer_hand.cards} очки: #{@dealer_hand.current_points}"
     puts "Банк дилера  :#{@dealer_bank.money}"
@@ -95,6 +121,7 @@ class BlackJack
     puts "Ваши карты : #{@user_hand.cards} очки: #{@user_hand.current_points} "
     puts "Ваш банк   : #{@user_bank.money}"
     puts COMPLITION
+    return
   end
 end
 
