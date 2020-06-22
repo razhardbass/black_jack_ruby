@@ -1,130 +1,122 @@
+# frozen_string_literal: true
+
 require_relative 'player.rb'
 require_relative 'dealer.rb'
 require_relative 'bank.rb'
 require_relative 'deck.rb'
 require_relative 'hand.rb'
+require_relative 'game_config.rb'
+require_relative 'card.rb'
+require_relative 'interface.rb'
+require_relative 'game_bank.rb'
 
 class BlackJack
+  include Interface
 
-  COMPLITION = '--' * 60
   def initialize
+    @dealer = Dealer.new
+    @player = create_player
+    @game_bank = GameBank.new
   end
 
   def start_programm
-    hello
-    new_game
-    @dealer_bank.make_bet
-    @user_bank.make_bet
-    table
-    play_game
-    game_result
+    loop do
+      new_game
+      show_new_game_text
+      @game_bank.bet(@player, @dealer)
+      show_table
+      play_game
+      game_result
+      new_game?
+      clear_table
+    end
   end
 
-  def hello
-    puts "Приветсвуем в игре Black Jack! Как вас зовут?"
-    name = gets.chomp.to_s
-    @player_name = Player.new(name)
-    @dealer = Dealer.new
-    puts "Ставки сделаны, игра начинается!"
+  def create_player
+    name = show_hello
+    Player.new(name)
   end
-  
+
   def new_game
-    @new_deck = Deck.new
-    @dealer_bank = Bank.new
-    @user_bank = Bank.new
-    @user_hand = Hand.new(@new_deck.give_a_card, @new_deck.value, @new_deck.give_a_card, @new_deck.value)
-  end
-
-  def table
-    puts COMPLITION
-    puts "Дилер"
-    puts "Карты дилера :['**', '**']  очки:"
-    puts "Банк дилера  :#{@dealer_bank.money}"
-    puts "==================================================="   
-    puts "#{@player_name.name}"
-    puts "Ваши карты : #{@user_hand.cards} очки: #{@user_hand.current_points} "
-    puts "Ваш банк   : #{@user_bank.money}"
-    puts COMPLITION
+    @deck = Deck.new
+    GameConfig::START_CARDS.times { @player.add_card(@deck.give_a_card) }
+    GameConfig::START_CARDS.times { @dealer.add_card(@deck.give_a_card) }
   end
 
   def play_game
     loop do
-      action_request
-      response_action
-      break if @action == 3
-    end
-  end
+      break unless players_can_make_bets?
 
-  def action_request
-    puts "Ваши действия: "
-    puts 'Нажмите 1, что бы пропустить ход'
-    puts 'Нажмите 2, что бы взять карту'
-    puts 'Нажмите 3, что бы открыть карты'
+      show_action_request
+      response_action
+      break if !@player.can_take_card? && !@dealer.can_take_card?
+      break if @enter == 3
+    end
   end
 
   def response_action
-    case gets.to_i
-      when 1 
-        skip_a_move
-      when 2
-        add_card
-      when 3
-        open_cards
-      else
-       puts 'Введите число от 1 до 3'
-    end
-  end
-
-  def game_result
-    skip_a_move
-    if (@user_hand.current_points > 21) && (@dealer_hand.current_points > 21)
-      @user_bank.draw
-      @dealer_bank.draw
-    end
-    if @user_hand.current_points == @dealer_hand.current_points
-      @user_bank.draw
-      @dealer_bank.draw
-    end
-    if @user_hand.current_points > 21
-      @dealer_bank.win_game
-    end
-    if  @dealer_hand.current_points > 21
-      @user_bank.win_game
-    end
-    if @user_hand.current_points > @dealer_hand.current_points
-      @user_bank.win_game
-    else
-      @dealer_bank.win_game
+    @enter = gets.to_i
+    if @enter == 1 then skip_a_move
+    elsif @enter == 2 then add_a_card
+    elsif @enter == 3 then show_open_table
     end
   end
 
   def skip_a_move
-    @dealer_hand = Hand.new(@new_deck.give_a_card, @new_deck.value, @new_deck.give_a_card, @new_deck.value)
-    dealer_points = @dealer_hand.current_points
+    puts 'Ход дилера...'
+    sleep 1
     loop do
-      @dealer_hand.add_card(@new_deck.give_a_card,@new_deck.value)
-      break if dealer_points < 17
+      break unless @dealer.can_take_card?
+      break if @dealer.points >= GameConfig::DEALER_MAX_POINTS
+
+      @dealer.add_card(@deck.give_a_card)
     end
   end
 
-  def add_card
-    @user_hand.add_card(@new_deck.give_a_card, @new_deck.value)
-    table
+  def add_a_card
+    return unless @player.can_take_card?
+
+    @player.add_card(@deck.give_a_card)
+    show_table
   end
 
-  def open_cards
-    skip_a_move
-    puts COMPLITION
-    puts "Карты дилера :#{@dealer_hand.cards} очки: #{@dealer_hand.current_points}"
-    puts "Банк дилера  :#{@dealer_bank.money}"
-    puts "==================================================="           
-    puts "Ваши карты : #{@user_hand.cards} очки: #{@user_hand.current_points} "
-    puts "Ваш банк   : #{@user_bank.money}"
-    puts COMPLITION
-    return
+  def game_result
+    winner = determine_winner
+    if winner.nil?
+      @game_bank.draw(@player, @dealer)
+      show_drow
+      show_open_table
+    else
+      @game_bank.win(winner)
+      show_winner(winner)
+      show_open_table
+    end
+  end
+
+  def determine_winner
+    if (@player.points > GameConfig::BJ) && (@dealer.points > GameConfig::BJ)
+      return
+    end
+    return if @player.points == @dealer.points
+    return @dealer if @player.points > GameConfig::BJ
+    return @player if @dealer.points > GameConfig::BJ
+
+    if @player.points > @dealer.points
+      @player
+    else
+      @dealer
+    end
+  end
+
+  def clear_table
+    @deck = Deck.new
+    @player.player_hand.cards.clear
+    @dealer.dealer_hand.cards.clear
+  end
+
+  def players_can_make_bets?
+    @player.money >= GameConfig::BET_SIZE && @dealer.money >= GameConfig::BET_SIZE
   end
 end
-
-
 
 BlackJack.new.start_programm

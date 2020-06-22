@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Bank
   attr_reader :money
 
@@ -5,15 +7,11 @@ class Bank
     @money = 100
   end
 
-  def make_bet 
+  def make_bet
     @money -= 10
   end
 
-  def draw
-    @money += 10
-  end
-
-  def win_game
-    @money += 20 
+  def income(money)
+    @money += money
   end
 end

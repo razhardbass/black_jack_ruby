@@ -1,27 +1,40 @@
-class Hand 
+# frozen_string_literal: true
+
+class Hand
   attr_reader :cards, :points
 
-  def initialize(card1, value1, card2, value2)
+  def initialize
     @cards = []
-    @points = []
-    @cards << card1
-    @points << value1.to_i
-    @cards << card2
-    @points << value2.to_i
+  end
+
+  def to_s
+    appearance = ''
+    @cards.each { |card| appearance += card.to_s + ' ' }
+    appearance
   end
 
   def current_points
-    @points.sum
+    @points = 0
+    @cards.map { |card| @points += card.value }
+    if ace_in_hand?
+      ace_in_hand.each do
+        @points -= GameConfig::FACE_VALUE if value > GameConfig::BJ
+      end
+    end
+    @points
   end
 
-  def ace_in_hand
-   if @points.include?(11)
-    current_points -= 10
-   end
+  def ace_in_hand?
+    @cards.any? { |card| card == 'A' }
   end
 
-  def add_card(card,value_card)
+  def aces_in_hand
+    amount = 0
+    @cards.each { |card| amount += 1 if card.ace? }
+    amount
+  end
+
+  def add_card(card)
     @cards << card
-    @points << value_card.to_i
   end
 end
