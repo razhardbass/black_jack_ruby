@@ -1,24 +1,15 @@
-class Deck 
+# frozen_string_literal: true
 
-  FACE = %w[2 3 4 5 6 7 8 9 10 J Q K A]
-  SUIT = %w[♡ ♧ ♢ ♤]
-  
-  attr_reader :value
-
-  def value_card
-    @value_card1 = FACE.sample
-    if %w[J Q K].include?(@value_card1)
-      @value = 10 
-    elsif @value_card1 == 'A'
-      @value = 11
-    else
-      @value = @value_card1
+class Deck
+  def initialize
+    @cards = []
+    Card::RANKS.each do |rank|
+      Card::SUITS.each { |suit| @cards << Card.new(rank, suit) }
     end
-    @value.to_i
+    @cards.shuffle!
   end
 
   def give_a_card
-    value_card
-    @card = "#{@value_card1}#{SUIT.sample}"
+    @cards.shift
   end
 end

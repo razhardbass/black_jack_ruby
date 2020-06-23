@@ -1,19 +1,17 @@
+# frozen_string_literal: true
+
 class Bank
   attr_reader :money
 
   def initialize
-    @money = 100
+    @money = GameConfig::START_MONEY
   end
 
-  def make_bet 
-    @money -= 10
+  def make_bet
+    @money -= GameConfig::BET_SIZE
   end
 
-  def draw
-    @money += 10
-  end
-
-  def win_game
-    @money += 20 
+  def income(money)
+    @money += money
   end
 end
