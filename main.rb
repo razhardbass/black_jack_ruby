@@ -110,8 +110,8 @@ class BlackJack
 
   def clear_table
     @deck = Deck.new
-    @player.player_hand.cards.clear
-    @dealer.dealer_hand.cards.clear
+    @player.hand.cards.clear
+    @dealer.hand.cards.clear
   end
 
   def players_can_make_bets?

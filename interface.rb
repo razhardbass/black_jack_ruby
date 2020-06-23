@@ -25,7 +25,7 @@ module Interface
   def show_open_table
     puts SPACE
     puts @dealer
-    puts "Карты дилера: #{@dealer.dealer_hand}"
+    puts "Карты дилера: #{@dealer.hand}"
     puts "Очки дилера: #{@dealer.points}"
     puts "Банк дилера: #{@dealer.money}"
     puts SPACE

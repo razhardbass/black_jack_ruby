@@ -25,7 +25,7 @@ class Hand
   end
 
   def ace_in_hand?
-    @cards.any? { |card| card == 'A' }
+    @cards.any?(&:ace?)
   end
 
   def aces_in_hand

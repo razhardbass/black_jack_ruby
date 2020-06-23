@@ -7,15 +7,14 @@ class GameBank
     @money = 0
   end
 
-  def bet(player, dealer)
-    player.make_bet
-    dealer.make_bet
-    @money = 20
+  def bet(*players)
+    players.each(&:make_bet)
+    @money += GameConfig::BET_SIZE * players.size
   end
 
-  def draw(player, dealer)
-    player.income(GameConfig::BET_SIZE)
-    dealer.income(GameConfig::BET_SIZE)
+  def draw(*players)
+    draw_income = @money / players.size
+    players.each { |player| player.income(draw_income) }
   end
 
   def win(winner)
